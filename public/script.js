@@ -1,4 +1,3 @@
-
 import * as THREE from "https://cdn.skypack.dev/three@0.135.0";
 import { gsap } from "https://cdn.skypack.dev/gsap@3.8.0";
 import { GLTFLoader } from "https://cdn.skypack.dev/three@0.135.0/examples/jsm/loaders/GLTFLoader";
@@ -10,17 +9,18 @@ class World {
     cameraPosition,
     fieldOfView = 75,
     nearPlane = 0.1,
-    farPlane = 100 })
-  {
+    farPlane = 100,
+  }) {
     this.parameters = {
       count: 1500,
       max: 12.5 * Math.PI,
       a: 2,
-      c: 4.5 };
+      c: 4.5,
+    };
 
     this.textureLoader = new THREE.TextureLoader();
     this.scene = new THREE.Scene();
-    this.scene.background = new THREE.Color('#c04851');
+    this.scene.background = new THREE.Color("#c04851");
     this.clock = new THREE.Clock();
     this.data = 0;
     this.time = { current: 0, t0: 0, t1: 0, t: 0, frequency: 0.0005 };
@@ -30,25 +30,29 @@ class World {
     this.aspectRatio = this.width / this.height;
     this.fieldOfView = fieldOfView;
     this.camera = new THREE.PerspectiveCamera(
-    fieldOfView,
-    this.aspectRatio,
-    nearPlane,
-    farPlane);
+      fieldOfView,
+      this.aspectRatio,
+      nearPlane,
+      farPlane
+    );
 
     this.camera.position.set(
-    cameraPosition.x,
-    cameraPosition.y,
-    cameraPosition.z);
+      cameraPosition.x,
+      cameraPosition.y,
+      cameraPosition.z
+    );
 
     this.scene.add(this.camera);
     this.renderer = new THREE.WebGLRenderer({
       canvas,
-      antialias: true });
+      antialias: true,
+    });
 
     this.pixelRatio = Math.min(window.devicePixelRatio, 2);
     this.renderer.setPixelRatio(this.pixelRatio);
     this.renderer.setSize(this.width, this.height);
     this.timer = 0;
+    this.flag = -1
     this.addToScene();
     this.addButton();
 
@@ -64,8 +68,9 @@ class World {
   loop() {
     this.time.elapsed = this.clock.getElapsedTime();
     this.time.delta = Math.min(
-    60,
-    (this.time.current - this.time.elapsed) * 1000);
+      60,
+      (this.time.current - this.time.elapsed) * 1000
+    );
 
     if (this.analyser && this.isRunning) {
       this.time.t = this.time.elapsed - this.time.t0 + this.time.t1;
@@ -85,37 +90,53 @@ class World {
           x: 0,
           z: 4.5,
           duration: 4,
-          ease: "expo.in" });
+          ease: "expo.in",
+        });
 
         tl.to(this.audioBtn, {
           opacity: () => 1,
           duration: 1,
-          ease: "power1.out" });
-
+          ease: "power1.out",
+        });
       } else {
         this.camera.position.x = Math.sin(this.angle.x) * this.parameters.a;
         this.camera.position.z = Math.min(
-        Math.max(Math.cos(this.angle.z) * this.parameters.c, 1.75),
-        6.5);
-
+          Math.max(Math.cos(this.angle.z) * this.parameters.c, 1.75),
+          6.5
+        );
       }
     }
     this.camera.lookAt(this.scene.position);
     if (this.heartMaterial) {
       this.heartMaterial.uniforms.uTime.value +=
-      this.time.delta * this.time.frequency * (1 + this.data * 0.2);
+        this.time.delta * this.time.frequency * (1 + this.data * 0.2);
     }
+    // if (this.model) {  // 这里是旋转
+    //   this.model.rotation.y -= 0.0005 * this.time.delta * (1 + this.data);
+    // }
+    // if(this.model) {  // 这里可以控制放大
+    //   this.model.scale.x -= 0.0005 * this.time.delta * (1 + this.data);
+    //   this.model.scale.y -= 0.0005 * this.time.delta * (1 + this.data);
+    //   this.model.scale.z -= 0.0005 * this.time.delta * (1 + this.data);
+    // }
     if (this.model) {
-      this.model.rotation.y -= 0.0005 * this.time.delta * (1 + this.data);
+      this.model.scale.x = this.model.scale.x + 0.0002 * this.time.delta * (1 + this.data) * this.flag;
+      this.model.scale.y = this.model.scale.y + 0.0002 * this.time.delta * (1 + this.data) * this.flag;
+      this.model.scale.z = this.model.scale.z + 0.0005 * this.time.delta * (1 + this.data) * this.flag;
+      // this.model.scale.z -= 0.0005 * this.time.delta * (1 + this.data);
     }
     if (this.snowMaterial) {
       this.snowMaterial.uniforms.uTime.value +=
-      this.time.delta * 0.0004 * (1 + this.data);
+        this.time.delta * 0.0004 * (1 + this.data);
     }
     this.render();
 
     this.time.current = this.time.elapsed;
-    requestAnimationFrame(this.loop.bind(this));
+    const time = requestAnimationFrame(this.loop.bind(this));
+    if(time - this.timer > 20) {
+      this.timer = time
+      this.flag = -this.flag
+    }
   }
   listenToResize() {
     window.addEventListener("resize", () => {
@@ -130,13 +151,13 @@ class World {
     });
   }
   listenToMouseMove() {
-    window.addEventListener("mousemove", e => {
+    window.addEventListener("mousemove", (e) => {
       const x = e.clientX;
       const y = e.clientY;
       gsap.to(this.camera.position, {
         x: gsap.utils.mapRange(0, window.innerWidth, 0.2, -0.2, x),
-        y: gsap.utils.mapRange(0, window.innerHeight, 0.2, -0.2, -y) });
-
+        y: gsap.utils.mapRange(0, window.innerHeight, 0.2, -0.2, -y),
+      });
     });
   }
   addHeart() {
@@ -148,13 +169,15 @@ class World {
         uSize: { value: 0.2 },
         uTex: {
           value: new THREE.TextureLoader().load(
-          "https://assets.codepen.io/74321/heart.png") } },
-
-
+            "https://assets.codepen.io/74321/heart.png"
+          ),
+        },
+      },
 
       depthWrite: false,
       blending: THREE.AdditiveBlending,
-      transparent: true });
+      transparent: true,
+    });
 
     const count = this.parameters.count; //2000
     const scales = new Float32Array(count * 1);
@@ -163,17 +186,17 @@ class World {
     const randoms = new Float32Array(count);
     const randoms1 = new Float32Array(count);
     const colorChoices = [
-    "white",
-    "red",
-    "pink",
-    "crimson",
-    "hotpink",
-    "green"];
-
+      "white",
+      "red",
+      "pink",
+      "crimson",
+      "hotpink",
+      "green",
+    ];
 
     const squareGeometry = new THREE.PlaneGeometry(1, 1);
     this.instancedGeometry = new THREE.InstancedBufferGeometry();
-    Object.keys(squareGeometry.attributes).forEach(attr => {
+    Object.keys(squareGeometry.attributes).forEach((attr) => {
       this.instancedGeometry.attributes[attr] = squareGeometry.attributes[attr];
     });
     this.instancedGeometry.index = squareGeometry.index;
@@ -193,24 +216,29 @@ class World {
       speeds[i] = Math.random() * this.parameters.max;
     }
     this.instancedGeometry.setAttribute(
-    "random",
-    new THREE.InstancedBufferAttribute(randoms, 1, false));
+      "random",
+      new THREE.InstancedBufferAttribute(randoms, 1, false)
+    );
 
     this.instancedGeometry.setAttribute(
-    "random1",
-    new THREE.InstancedBufferAttribute(randoms1, 1, false));
+      "random1",
+      new THREE.InstancedBufferAttribute(randoms1, 1, false)
+    );
 
     this.instancedGeometry.setAttribute(
-    "aScale",
-    new THREE.InstancedBufferAttribute(scales, 1, false));
+      "aScale",
+      new THREE.InstancedBufferAttribute(scales, 1, false)
+    );
 
     this.instancedGeometry.setAttribute(
-    "aSpeed",
-    new THREE.InstancedBufferAttribute(speeds, 1, false));
+      "aSpeed",
+      new THREE.InstancedBufferAttribute(speeds, 1, false)
+    );
 
     this.instancedGeometry.setAttribute(
-    "aColor",
-    new THREE.InstancedBufferAttribute(colors, 3, false));
+      "aColor",
+      new THREE.InstancedBufferAttribute(colors, 3, false)
+    );
 
     this.heart = new THREE.Mesh(this.instancedGeometry, this.heartMaterial);
     this.scene.add(this.heart);
@@ -222,23 +250,26 @@ class World {
   }
   async addModel() {
     this.model = await this.loadObj(
-    "https://assets.codepen.io/74321/heart.glb");
+      "https://assets.codepen.io/74321/heart.glb"
+    );
 
     this.model.scale.set(0.01, 0.01, 0.01);
     this.model.material = new THREE.MeshMatcapMaterial({
       matcap: this.textureLoader.load(
-      "https://assets.codepen.io/74321/3.png",
-      () => {
-        gsap.to(this.model.scale, {
-          x: 0.55,
-          y: 0.55,
-          z: 0.55,
-          duration: 1.5,
-          ease: "Elastic.easeOut" });
+        "https://assets.codepen.io/74321/3.png",
+        () => {
+          gsap.to(this.model.scale, {
+            x: 0.55,
+            y: 0.55,
+            z: 0.55,
+            duration: 1.5,
+            ease: "Elastic.easeOut",
+          });
+        }
+      ),
 
-      }),
-
-      color: "#ee3f4d" });
+      color: "#ee3f4d",
+    });
 
     this.scene.add(this.model);
   }
@@ -254,11 +285,11 @@ class World {
         gsap.to(this.audioBtn, {
           opacity: 0,
           duration: 1,
-          ease: "power1.out" });
-
+          ease: "power1.out",
+        });
       } else {
-        audio.play()
-        audio.muted = true
+        audio.play();
+        audio.muted = true;
         this.loadMusic().then(() => {
           console.log("music loaded");
         });
@@ -267,52 +298,52 @@ class World {
   }
   loadObj(path) {
     const loader = new GLTFLoader();
-    return new Promise(resolve => {
+    return new Promise((resolve) => {
       loader.load(
-      path,
-      response => {
-        resolve(response.scene.children[0]);
-      },
-      xhr => {},
-      err => {
-        console.log(err);
-      });
-
+        path,
+        (response) => {
+          resolve(response.scene.children[0]);
+        },
+        (xhr) => {},
+        (err) => {
+          console.log(err);
+        }
+      );
     });
   }
   loadMusic() {
-    return new Promise(resolve => {
+    return new Promise((resolve) => {
       const listener = new THREE.AudioListener();
       this.camera.add(listener);
       // create a global audio source
       this.sound = new THREE.Audio(listener);
       const audioLoader = new THREE.AudioLoader();
       audioLoader.load(
-      "./huahai.mp3",
-      buffer => {
-        this.sound.setBuffer(buffer);
-        this.sound.setLoop(false);
-        this.sound.setVolume(0.5);
-        this.sound.play();
-        this.analyser = new THREE.AudioAnalyser(this.sound, 32);
-        // get the average frequency of the sound
-        const data = this.analyser.getAverageFrequency();
-        this.isRunning = true;
-        this.t0 = this.time.elapsed;
-        resolve(data);
-      },
-      progress => {
-        gsap.to(this.audioBtn, {
-          opacity: () => 1 - progress.loaded / progress.total,
-          duration: 1,
-          ease: "power1.out" });
+        "./huahai.mp3",
+        (buffer) => {
+          this.sound.setBuffer(buffer);
+          this.sound.setLoop(false);
+          this.sound.setVolume(0.5);
+          this.sound.play();
+          this.analyser = new THREE.AudioAnalyser(this.sound, 32);
+          // get the average frequency of the sound
+          const data = this.analyser.getAverageFrequency();
+          this.isRunning = true;
+          this.t0 = this.time.elapsed;
+          resolve(data);
+        },
+        (progress) => {
+          gsap.to(this.audioBtn, {
+            opacity: () => 1 - progress.loaded / progress.total,
+            duration: 1,
+            ease: "power1.out",
+          });
+        },
 
-      },
-
-      error => {
-        console.log(error);
-      });
-
+        (error) => {
+          console.log(error);
+        }
+      );
     });
   }
   addSnow() {
@@ -324,13 +355,15 @@ class World {
         uSize: { value: 0.3 },
         uTex: {
           value: new THREE.TextureLoader().load(
-          "https://assets.codepen.io/74321/heart.png") } },
-
-
+            "https://assets.codepen.io/74321/heart.png"
+          ),
+        },
+      },
 
       depthWrite: false,
       blending: THREE.AdditiveBlending,
-      transparent: true });
+      transparent: true,
+    });
 
     const count = 550;
     const scales = new Float32Array(count * 1);
@@ -342,7 +375,7 @@ class World {
 
     const squareGeometry = new THREE.PlaneGeometry(1, 1);
     this.instancedGeometry = new THREE.InstancedBufferGeometry();
-    Object.keys(squareGeometry.attributes).forEach(attr => {
+    Object.keys(squareGeometry.attributes).forEach((attr) => {
       this.instancedGeometry.attributes[attr] = squareGeometry.attributes[attr];
     });
     this.instancedGeometry.index = squareGeometry.index;
@@ -362,33 +395,38 @@ class World {
       colors[i3 + 2] = color.b;
     }
     this.instancedGeometry.setAttribute(
-    "phi",
-    new THREE.InstancedBufferAttribute(phis, 1, false));
+      "phi",
+      new THREE.InstancedBufferAttribute(phis, 1, false)
+    );
 
     this.instancedGeometry.setAttribute(
-    "random",
-    new THREE.InstancedBufferAttribute(randoms, 1, false));
+      "random",
+      new THREE.InstancedBufferAttribute(randoms, 1, false)
+    );
 
     this.instancedGeometry.setAttribute(
-    "random1",
-    new THREE.InstancedBufferAttribute(randoms1, 1, false));
+      "random1",
+      new THREE.InstancedBufferAttribute(randoms1, 1, false)
+    );
 
     this.instancedGeometry.setAttribute(
-    "aScale",
-    new THREE.InstancedBufferAttribute(scales, 1, false));
+      "aScale",
+      new THREE.InstancedBufferAttribute(scales, 1, false)
+    );
 
     this.instancedGeometry.setAttribute(
-    "aColor",
-    new THREE.InstancedBufferAttribute(colors, 3, false));
+      "aColor",
+      new THREE.InstancedBufferAttribute(colors, 3, false)
+    );
 
     this.snow = new THREE.Mesh(this.instancedGeometry, this.snowMaterial);
     this.scene.add(this.snow);
-  }}
-
+  }
+}
 
 const world = new World({
   canvas: document.querySelector("canvas.webgl"),
-  cameraPosition: { x: 0, y: 0, z: 4.5 } });
-
+  cameraPosition: { x: 0, y: 0, z: 4.5 },
+});
 
 world.loop();
